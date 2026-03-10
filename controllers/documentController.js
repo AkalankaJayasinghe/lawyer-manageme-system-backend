@@ -1,40 +1,40 @@
 const Document = require('../models/documentModel');
 
-// Upload a document
+// POST /api/documents/upload
 exports.uploadDocument = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     const { title, booking } = req.body;
-
-    const document = new Document({
+    const document = await Document.create({
       title,
-      booking,
-      filePath: req.file.path,
-      uploadedBy: req.user._id,
+      filePath:   req.file.path,
+      fileType:   req.file.mimetype,
+      size:       req.file.size,
+      uploadedBy: req.user.id,
+      bookingId:  booking || null
     });
-    await document.save();
     res.status(201).json({ message: 'Document uploaded successfully', document });
   } catch (error) {
     res.status(500).json({ message: 'Error uploading document', error: error.message });
   }
 };
 
-// Retrieve all documents (optionally by booking)
+// GET /api/documents
 exports.getAllDocuments = async (req, res) => {
   try {
-    let filter = {};
-    if (req.query.booking) filter.booking = req.query.booking;
-    const documents = await Document.find(filter);
+    const where = { uploadedBy: req.user.id };
+    if (req.query.booking) where.bookingId = req.query.booking;
+    const documents = await Document.findAll({ where });
     res.status(200).json(documents);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving documents', error: error.message });
   }
 };
 
-// Retrieve a document by ID
+// GET /api/documents/:id
 exports.getDocumentById = async (req, res) => {
   try {
-    const document = await Document.findById(req.params.id);
+    const document = await Document.findByPk(req.params.id);
     if (!document) return res.status(404).json({ message: 'Document not found' });
     res.status(200).json(document);
   } catch (error) {
@@ -42,11 +42,11 @@ exports.getDocumentById = async (req, res) => {
   }
 };
 
-// Delete a document by ID
+// DELETE /api/documents/:id
 exports.deleteDocument = async (req, res) => {
   try {
-    const document = await Document.findByIdAndDelete(req.params.id);
-    if (!document) return res.status(404).json({ message: 'Document not found' });
+    const deleted = await Document.destroy({ where: { id: req.params.id, uploadedBy: req.user.id } });
+    if (!deleted) return res.status(404).json({ message: 'Document not found or not authorized' });
     res.status(200).json({ message: 'Document deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting document', error: error.message });

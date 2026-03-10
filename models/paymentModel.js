@@ -1,43 +1,26 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const paymentSchema = new mongoose.Schema({
-  booking: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking'
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User'
-  },
-  lawyerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'Lawyer'
-  },
-  amount: {
-    type: Number,
-    required: true
-  },
+const Payment = sequelize.define('Payment', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  bookingId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true,  field: 'booking_id' },
+  userId:    { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, field: 'user_id' },
+  lawyerId:  { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, field: 'lawyer_id' },
+  amount:    { type: DataTypes.DECIMAL(10, 2), allowNull: false },
   paymentMethod: {
-    type: String,
-    required: true,
-    enum: ['credit_card', 'paypal', 'bank_transfer']
+    type: DataTypes.ENUM('credit_card', 'paypal', 'bank_transfer'),
+    allowNull: false,
+    field: 'payment_method'
   },
   status: {
-    type: String,
-    required: true,
-    enum: ['pending', 'completed', 'failed'],
-    default: 'pending'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.ENUM('pending', 'completed', 'failed'),
+    defaultValue: 'pending'
   }
+}, {
+  tableName:  'payments',
+  timestamps: true,
+  createdAt:  'created_at',
+  updatedAt:  'updated_at'
 });
 
-module.exports = mongoose.model('Payment', paymentSchema);
+module.exports = Payment;

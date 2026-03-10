@@ -1,33 +1,19 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const DocumentSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  filePath: {
-    type: String,
-    required: true
-  },
-  fileType: {
-    type: String,
-    required: true
-  },
-  size: Number,
-  uploadedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  booking: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+const Document = sequelize.define('Document', {
+  id:       { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  title:    { type: DataTypes.STRING(255),  allowNull: false },
+  filePath: { type: DataTypes.STRING(1000), allowNull: false, field: 'file_path' },
+  fileType: { type: DataTypes.STRING(100),  allowNull: false, field: 'file_type' },
+  size:     { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+  uploadedBy: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, field: 'uploaded_by' },
+  bookingId:  { type: DataTypes.INTEGER.UNSIGNED, allowNull: true,  field: 'booking_id' }
+}, {
+  tableName:  'documents',
+  timestamps: true,
+  createdAt:  'created_at',
+  updatedAt:  false
 });
 
-module.exports = mongoose.model('Document', DocumentSchema);
+module.exports = Document;

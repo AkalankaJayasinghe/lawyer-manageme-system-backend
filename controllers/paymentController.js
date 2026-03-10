@@ -1,75 +1,45 @@
 const Payment = require('../models/paymentModel');
 
-// Create a new payment
+// POST /api/payments/create-payment
 exports.createPayment = async (req, res) => {
   try {
-    // Add actual implementation for your payment model here
-    const payment = await Payment.create(req.body);
-    res.status(201).json({ 
-      success: true,
-      message: 'Payment created successfully',
-      data: payment
-    });
+    const payment = await Payment.create({ ...req.body, userId: req.user.id });
+    res.status(201).json({ success: true, message: 'Payment created successfully', data: payment });
   } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error',
-      error: error.message 
-    });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Get all payments for a user
+// GET /api/payments/payments
 exports.getUserPayments = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const payments = await Payment.find({ user: userId });
-    res.status(200).json({
-      success: true,
-      data: payments
-    });
+    const payments = await Payment.findAll({ where: { userId: req.user.id } });
+    res.status(200).json({ success: true, data: payments });
   } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error',
-      error: error.message 
-    });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Get payment by ID
+// GET /api/payments/payments/:id
 exports.getPaymentById = async (req, res) => {
   try {
-    const paymentId = req.params.id;
-    const payment = await Payment.findById(paymentId);
+    const payment = await Payment.findByPk(req.params.id);
     if (!payment) return res.status(404).json({ success: false, message: 'Payment not found' });
-    res.status(200).json({
-      success: true,
-      data: payment
-    });
+    res.status(200).json({ success: true, data: payment });
   } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error',
-      error: error.message 
-    });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Get payment history for a user
+// GET /api/payments/payment-history
 exports.getPaymentHistory = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const payments = await Payment.find({ user: userId });
-    res.status(200).json({
-      success: true,
-      data: payments
+    const payments = await Payment.findAll({
+      where: { userId: req.user.id },
+      order: [['created_at', 'DESC']]
     });
+    res.status(200).json({ success: true, data: payments });
   } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error',
-      error: error.message 
-    });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

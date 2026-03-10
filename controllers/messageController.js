@@ -1,39 +1,42 @@
-const Message = require('../models/messageModel');
+const { Op }    = require('sequelize');
+const Message   = require('../models/messageModel');
 
-// Send a message
+// POST /api/messages/send
 exports.sendMessage = async (req, res) => {
   try {
-    const { receiverId, content } = req.body;
-    const senderId = req.user._id;
-    const newMessage = new Message({ senderId, receiverId, content });
-    await newMessage.save();
-    res.status(201).json({ message: 'Message sent successfully', newMessage });
+    const { receiverId, content, bookingId } = req.body;
+    const message = await Message.create({ senderId: req.user.id, receiverId, content, bookingId: bookingId || null });
+    res.status(201).json({ message: 'Message sent successfully', newMessage: message });
   } catch (error) {
     res.status(500).json({ message: 'Error sending message', error: error.message });
   }
 };
 
-// Get messages between two users
+// GET /api/messages/:userId  – conversation between two users
 exports.getMessages = async (req, res) => {
   try {
-    const { userId1, userId2 } = req.params;
-    const messages = await Message.find({
-      $or: [
-        { senderId: userId1, receiverId: userId2 },
-        { senderId: userId2, receiverId: userId1 }
-      ]
-    }).sort({ createdAt: 1 });
+    const other = parseInt(req.params.userId);
+    const me    = req.user.id;
+    const messages = await Message.findAll({
+      where: {
+        [Op.or]: [
+          { senderId: me,    receiverId: other },
+          { senderId: other, receiverId: me    }
+        ]
+      },
+      order: [['timestamp', 'ASC']]
+    });
     res.status(200).json(messages);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving messages', error: error.message });
   }
 };
 
-// Delete a message
+// DELETE /api/messages/:messageId
 exports.deleteMessage = async (req, res) => {
   try {
-    const { messageId } = req.params;
-    await Message.findByIdAndDelete(messageId);
+    const deleted = await Message.destroy({ where: { id: req.params.messageId } });
+    if (!deleted) return res.status(404).json({ message: 'Message not found' });
     res.status(200).json({ message: 'Message deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting message', error: error.message });

@@ -1,90 +1,37 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const BookingSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  lawyer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Lawyer',
-    required: true,
-  },
-  title: {
-    type: String,
-    required: [true, 'Please add a booking title'],
-  },
-  description: {
-    type: String,
-    required: [true, 'Please add a description'],
-  },
-  date: {
-    type: Date,
-    required: [true, 'Please add a booking date'],
-  },
-  startTime: {
-    type: String,
-    required: [true, 'Please add a start time'],
-  },
-  duration: {
-    type: Number,
-    required: [true, 'Please add duration in minutes'],
-    default: 60,
-  },
-  fee: {
-    type: Number,
-    required: [true, 'Please add a fee'],
-  },
+const Booking = sequelize.define('Booking', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  userId:   { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, field: 'user_id' },
+  lawyerId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, field: 'lawyer_id' },
+  title:       { type: DataTypes.STRING(255), allowNull: false },
+  description: { type: DataTypes.TEXT,        allowNull: false },
+  date:        { type: DataTypes.DATEONLY,    allowNull: false },
+  startTime:   { type: DataTypes.STRING(20),  allowNull: false, field: 'start_time' },
+  duration:    { type: DataTypes.INTEGER.UNSIGNED, defaultValue: 60 },
+  fee:         { type: DataTypes.DECIMAL(10, 2), allowNull: false },
   urgencyLevel: {
-    type: String,
-    enum: ['low', 'medium', 'high'],
-    default: 'medium',
+    type: DataTypes.ENUM('low', 'medium', 'high'),
+    defaultValue: 'medium',
+    field: 'urgency_level'
   },
   status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'completed', 'cancelled'],
-    default: 'pending',
+    type: DataTypes.ENUM('pending', 'confirmed', 'completed', 'cancelled'),
+    defaultValue: 'pending'
   },
   paymentStatus: {
-    type: String,
-    enum: ['pending', 'paid', 'refunded'],
-    default: 'pending',
+    type: DataTypes.ENUM('pending', 'paid', 'refunded'),
+    defaultValue: 'pending',
+    field: 'payment_status'
   },
-  documents: [{
-    filename: String,
-    filepath: String,
-    uploadDate: {
-      type: Date,
-      default: Date.now,
-    },
-  }],
-  notes: {
-    type: String,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  documents: { type: DataTypes.JSON, defaultValue: [] },
+  notes:     { type: DataTypes.TEXT, allowNull: true }
 }, {
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  tableName:  'bookings',
+  timestamps: true,
+  createdAt:  'created_at',
+  updatedAt:  false
 });
 
-// Virtual for messages related to this booking
-BookingSchema.virtual('messages', {
-  ref: 'Message',
-  localField: '_id',
-  foreignField: 'booking',
-  justOne: false
-});
-
-// Virtual for payment related to this booking
-BookingSchema.virtual('payment', {
-  ref: 'Payment',
-  localField: '_id',
-  foreignField: 'booking',
-  justOne: true
-});
-
-module.exports = mongoose.model('Booking', BookingSchema);
+module.exports = Booking;

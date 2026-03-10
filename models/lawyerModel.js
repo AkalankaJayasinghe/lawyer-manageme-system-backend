@@ -1,71 +1,44 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const LawyerSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    unique: true
+// Arrays stored as JSON columns for compatibility with existing controller logic
+const Lawyer = sequelize.define('Lawyer', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  userId: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: false,
+    unique: true,
+    field: 'user_id'
   },
   licenseNumber: {
-    type: String,
-    required: [true, 'Please add a license number'],
+    type: DataTypes.STRING(100),
+    allowNull: false,
     unique: true,
-    trim: true
+    field: 'license_number'
   },
-  specializations: [{
-    type: String,
-    required: [true, 'Please add at least one specialization']
-  }],
-  experience: {
-    type: Number,
-    required: [true, 'Please add years of experience']
+  specializations: { type: DataTypes.JSON, defaultValue: [] },
+  experience:       { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  bio:              { type: DataTypes.TEXT, allowNull: false },
+  education:        { type: DataTypes.JSON, defaultValue: [] },
+  rates:            { type: DataTypes.JSON, defaultValue: {} },
+  availability:     { type: DataTypes.JSON, defaultValue: [] },
+  availableTimeSlots: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    field: 'available_time_slots'
   },
-  bio: {
-    type: String,
-    required: [true, 'Please add a bio']
-  },
-  education: [{
-    institution: String,
-    degree: String,
-    year: Number
-  }],
-  rates: {
-    hourly: Number,
-    consultation: Number
-  },
-  availability: {
-    type: [String],
-    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  },
-  availableTimeSlots: [{
-    day: String,
-    startTime: String,
-    endTime: String
-  }],
-  languages: [String],
+  languages: { type: DataTypes.JSON, defaultValue: [] },
   rating: {
-    type: Number,
-    min: 0,
-    max: 5,
-    default: 0
+    type: DataTypes.DECIMAL(3, 2),
+    defaultValue: 0,
+    validate: { min: 0, max: 5 }
   },
-  reviews: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    text: String,
-    rating: Number,
-    date: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  reviews: { type: DataTypes.JSON, defaultValue: [] }
+}, {
+  tableName:  'lawyers',
+  timestamps: true,
+  createdAt:  'created_at',
+  updatedAt:  false
 });
 
-module.exports = mongoose.model('Lawyer', LawyerSchema);
+module.exports = Lawyer;
